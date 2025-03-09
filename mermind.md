@@ -106,3 +106,47 @@ graph TD
    - 日志系统记录整个执行过程
 
 这个流程图展示了应用程序的主要组件和它们之间的关系，帮助理解系统的整体架构和执行流程。
+
+
+
+# max_steps执行流程分析（含文件名和函数名）
+
+```mermaid
+graph TD
+    A[初始化代理: app/agent/base.py -> BaseAgent.__init__] --> B[设置max_steps值]
+    B --> C[执行: app/agent/base.py -> BaseAgent.run]
+    C --> D[执行while循环判断: current_step < max_steps && state != FINISHED]
+    D -- 条件为真 --> E[执行: 子类实现的step方法]
+    E --> F[app/agent/base.py -> BaseAgent.run: current_step += 1]
+    F --> G[记录步骤结果: results.append]
+    G --> H[app/agent/base.py -> BaseAgent.is_stuck/handle_stuck_state]
+    H --> D
+    D -- 条件为假 --> I[结束执行循环]
+    I -- "current_step >= max_steps" --> J[添加提示: Terminated: Reached max steps]
+    I -- "state == AgentState.FINISHED" --> K[正常完成]
+    J --> L[返回结果: app/agent/base.py -> BaseAgent.run返回]
+    K --> L
+```
+
+## 相关代码关系说明
+
+- **文件路径**: `app/agent/base.py`
+  - **主要类**: `BaseAgent` - 定义了基础执行流程和抽象方法
+  - **关键方法**: 
+    - `run()` - 执行主循环，控制步数限制
+    - `step()` - 抽象方法，由子类实现实际步骤执行逻辑
+    - `is_stuck()` - 检测代理是否陷入循环
+    - `handle_stuck_state()` - 处理卡住状态
+
+- **子类实现**:
+  - `app/agent/react.py`: `ReActAgent` (max_steps=10)
+  - `app/agent/toolcall.py`: `ToolCallAgent` (max_steps=30)
+  - `app/agent/planning.py`: `PlanningAgent` (max_steps=20)
+  - `app/agent/swe.py`: `SWEAgent` (max_steps=30)
+  - `app/agent/manus.py`: `Manus` (继承自ToolCallAgent，max_steps=30)
+
+- **终止条件**:
+  1. `current_step >= max_steps`: 达到步数上限
+  2. `state == AgentState.FINISHED`: 通常由`Terminate`工具触发，表示任务完成
+
+执行过程会在每次步骤后检查是否达到条件，因此实际执行步数可能少于设定的`max_steps`值。
