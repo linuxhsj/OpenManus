@@ -68,6 +68,30 @@ base_url = "https://api.openai.com/v1"
 api_key = "sk-..."  # 替换为真实 API 密钥
 ```
 
+### config.toml到底怎么配置？
+硅基流动 配置教程
+需要先申请硅基流动 api_key，申请地址 https://cloud.siliconflow.cn/i/0DjLGs4i
+文件路径：`OpenManus-main/config/config.toml`
+### 完整配置内容如下
+```
+model = "Qwen/QwQ-32B"
+base_url = "https://api.siliconflow.cn/v1"
+api_key = "sk-你的KEY"
+max_tokens = 4096
+temperature = 0.0
+
+[tools]
+browser_enabled = true  # 必须为true
+
+[tools.browser]
+headless = false        # 设为false以显示浏览器界面（调试时建议开启）
+executable_path = ""    # 留空则自动查找Chromium路径（若自定义路径需填写）
+timeout = 60            # 增加超时时间应对网络延迟
+
+proxy = "http://127.0.0.1:7897"  # 替换为你的代理地址
+browser_type = "chromium"  # 可选chromium, firefox
+```
+
 ## 快速启动
 
 一行命令运行 OpenManus：
